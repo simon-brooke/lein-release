@@ -5,6 +5,8 @@
   (:import
    [java.util.regex Pattern]))
 
+(def ^:dynamic config {})
+
 (defn raise [fmt & args]
   (throw (RuntimeException. (apply format fmt args))))
 
@@ -112,8 +114,8 @@
 (defn compute-next-development-version [current-version]
   (let [parts             (vec (.split current-version "\\."))
         version-parts     (vec (take (dec (count parts)) parts))
-        minor-version     (last parts)
-        new-minor-version (str (inc (Integer/parseInt minor-version)) "-SNAPSHOT")]
+        minor-version     (-> parts last (.split "\\D" 2) first Integer/parseInt)
+        new-minor-version (str (inc minor-version) "-SNAPSHOT")]
     (string/join "." (conj version-parts new-minor-version))))
 
 
