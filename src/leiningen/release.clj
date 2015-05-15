@@ -198,7 +198,7 @@
         (set-project-version! current-version release-version)
         (println "adding, committing and tagging project.clj")
         (scm! :add "project.clj")
-        (scm! :commit "-m --no-verify" (format "lein-release plugin: preparing %s release" release-version))
+        (scm! :commit "-m" "--no-verify" (format "lein-release plugin: preparing %s release" release-version))
         (scm! :tag (format "%s-%s" (:name project) release-version)))
       (when-not (.exists (java.io.File. jar-file-name))
         (println "creating jar and pom files...")
