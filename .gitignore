@@ -1,4 +1,5 @@
 /pom.xml
+/pom.xml.asc
 target
 *jar
 /lib
@@ -8,3 +9,4 @@ target
 /checkouts
 /.lein-deps-sum
 *~
+out.txt
