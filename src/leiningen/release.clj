@@ -16,22 +16,40 @@
   (throw (RuntimeException. (apply format fmt args))))
 
 (def scm-systems
-     {:git {:add    ["git" "add"]
-            :tag    ["git" "tag"]
-            :commit ["git" "commit"]
-            :push   ["git" "push" "origin" "master"]
-            :status ["git" "status"]
-            :start-release ["git" "flow" "release" "start"]
-            :finish-release ["git" "flow" "release" "finish"]}})
+  {:git {:add    ["git" "add"]
+         :tag    ["git" "tag"]
+         :commit ["git" "commit"]
+         :push   ["git" "push" "origin" "master"]
+         :status ["git" "status"]
+         :start-release ["git" "flow" "release" "start"]
+         :finish-release ["git" "flow" "release" "finish"]}})
+
+
+(defmacro compose-exception-reason
+  "Compose and return a sensible reason message for this `exception`."
+  [exception]
+  `(string/join
+    "\n\tcaused by: "
+    (reverse
+     (loop [ex# ~exception result# ()]
+       (if-not (nil? ex#)
+         (recur
+          (.getCause ex#)
+          (cons (str
+                 (.getName (.getClass ex#))
+                 ": "
+                 (.getMessage ex#)) result#))
+         result#)))))
+
 
 (defn detect-scm []
   (or
    (:scm config)
    (cond
-     (.exists (java.io.File. ".git"))
-     :git
-     :no-scm-detected
-     (raise "Error: no scm detected! (I know only about git for now)."))))
+    (.exists (java.io.File. ".git"))
+    :git
+    :no-scm-detected
+    (raise "Error: no scm detected! (I know only about git for now)."))))
 
 (defn sh! [& args]
   (let [res (apply sh/sh args)]
@@ -48,39 +66,39 @@
     (apply sh! (concat scm-cmd args))))
 
 (def maven-version-regexes
-     {:major-only                               #"(\d+)(?:-(.+))?"
-      :major-and-minor                          #"(\d+)\.(\d+)(?:-(.+))?"
-      :major-minor-and-incremental              #"(\d+)\.(\d+)\.(\d+)(?:-(.+))?"})
+  {:major-only                               #"(\d+)(?:-(.+))?"
+   :major-and-minor                          #"(\d+)\.(\d+)(?:-(.+))?"
+   :major-minor-and-incremental              #"(\d+)\.(\d+)\.(\d+)(?:-(.+))?"})
 
 (defn parse-maven-version [vstr]
   ;; <MajorVersion [> . <MinorVersion [> . <IncrementalVersion ] ] [> - <BuildNumber | Qualifier ]>
   (cond
-    (re-matches (:major-only maven-version-regexes) vstr)
-    (let [[[_ major qualifier]] (re-seq (:major-only maven-version-regexes) vstr)]
-      {:format      :major-only
-       :major       major
-       :minor       nil
-       :incremental nil
-       :qualifier   qualifier})
+   (re-matches (:major-only maven-version-regexes) vstr)
+   (let [[[_ major qualifier]] (re-seq (:major-only maven-version-regexes) vstr)]
+     {:format      :major-only
+      :major       major
+      :minor       nil
+      :incremental nil
+      :qualifier   qualifier})
 
-    (re-matches (:major-and-minor maven-version-regexes) vstr)
-    (let [[[_ major minor qualifier]] (re-seq (:major-and-minor maven-version-regexes) vstr)]
-      {:format      :major-and-minor
-       :major       major
-       :minor       minor
-       :incremental nil
-       :qualifier   qualifier})
+   (re-matches (:major-and-minor maven-version-regexes) vstr)
+   (let [[[_ major minor qualifier]] (re-seq (:major-and-minor maven-version-regexes) vstr)]
+     {:format      :major-and-minor
+      :major       major
+      :minor       minor
+      :incremental nil
+      :qualifier   qualifier})
 
-    (re-matches (:major-minor-and-incremental maven-version-regexes) vstr)
-    (let [[[_ major minor incremental qualifier]] (re-seq (:major-minor-and-incremental maven-version-regexes) vstr)]
-      {:format      :major-minor-and-incremental
-       :major       major
-       :minor       minor
-       :incremental incremental
-       :qualifier   qualifier})
-    :else
-    {:format :not-recognized
-     :major vstr}))
+   (re-matches (:major-minor-and-incremental maven-version-regexes) vstr)
+   (let [[[_ major minor incremental qualifier]] (re-seq (:major-minor-and-incremental maven-version-regexes) vstr)]
+     {:format      :major-minor-and-incremental
+      :major       major
+      :minor       minor
+      :incremental incremental
+      :qualifier   qualifier})
+   :else
+   {:format :not-recognized
+    :major vstr}))
 
 
 (defn ^:dynamic get-release-qualifier []
@@ -123,14 +141,14 @@
 
 (defn detect-deployment-strategy [project]
   (cond
-    (:deploy-via config)
-    (:deploy-via config)
+   (:deploy-via config)
+   (:deploy-via config)
 
-    (:repositories project)
-    :lein-deploy
+   (:repositories project)
+   :lein-deploy
 
-    :no-deploy-strategy
-    :lein-install))
+   :no-deploy-strategy
+   :lein-install))
 
 
 (defn perform-deploy! [project project-jar]
@@ -144,13 +162,13 @@
 
 (defn extract-project-version-from-file
   ([]
-     (extract-project-version-from-file *project-file-name*))
+   (extract-project-version-from-file *project-file-name*))
   ([proj-file]
-     (let [s (slurp proj-file)
-           m (.matcher (Pattern/compile "\\(defproject .+? \"([^\"]+?)\"") s)]
-       (if-not (.find m)
-         (raise "Error: unable to find project version in file: %s" proj-file))
-       (.group m 1))))
+   (let [s (slurp proj-file)
+         m (.matcher (Pattern/compile "\\(defproject .+? \"([^\"]+?)\"") s)]
+     (if-not (.find m)
+       (raise "Error: unable to find project version in file: %s" proj-file))
+     (.group m 1))))
 
 (defn is-snapshot? [vstring]
   (string/ends-with? vstring "-SNAPSHOT"))
@@ -162,16 +180,16 @@
 
 (defn extract-git-flow-config
   [[line & lines]]
-   (cond
-    (empty? line) nil
-    (= (string/trim line) "[gitflow \"branch\"]")
-    (loop [[l & ls] lines result '()]
-      (if
-        (empty? l)
-        (reverse result)
-        (recur ls (cons l result))))
-    true
-    (extract-git-flow-config lines)))
+  (cond
+   (empty? line) nil
+   (= (string/trim line) "[gitflow \"branch\"]")
+   (loop [[l & ls] lines result '()]
+     (if
+       (empty? l)
+       (reverse result)
+       (recur ls (cons l result))))
+   true
+   (extract-git-flow-config lines)))
 
 
 (defn git-flow-initialised?
@@ -189,51 +207,55 @@
 
 (defn release [project & args]
   (binding [config (or (:lein-release project) config)]
-    (if-let [current-version (get project :version)]
-      (let
-        [release-version  (compute-release-version current-version)
-         next-dev-version (compute-next-development-version
-                           (string/replace current-version "-SNAPSHOT" ""))
-         target-dir       (:target-path
-                           project
-                           (:target-dir
-                            project
-                            (:jar-dir project "."))) ; target-path for lein2, target-dir or jar-dir for lein1
-         jar-file-name    (format "%s/%s-%s.jar"
-                                  target-dir
-                                  (:name project)
-                                  release-version)
-         flow? (git-flow-initialised?)]
-        (when (is-snapshot? current-version)
-          (println (format "setting project version %s => %s"
-                           current-version
-                           release-version))
-          (if
-            flow?
-            (scm! :start-release release-version))
-          (set-project-version! current-version release-version)
-          (println "adding, committing and tagging project.clj")
-          (scm! :add "project.clj")
-          (scm! :commit "--no-verify" "-m" (format "lein-release plugin: preparing %s release" release-version))
-          (scm! :tag (format "%s-%s" (:name project) release-version)))
-        (when-not (.exists (java.io.File. jar-file-name))
-          (println "creating jar and pom files...")
-          (sh! "lein" "jar")
-          (sh! "lein" "pom"))
-        (when (-> project :lein-release :build-uberjar)
-          (println "creating uberjar")
-          (sh! "lein" "uberjar"))
-        (perform-deploy! project jar-file-name)
-        (if flow? (scm! :finish-release release-version))
-        (when-not (is-snapshot? (extract-project-version-from-file))
-          (println (format "updating version %s => %s for next dev cycle" release-version next-dev-version))
-          (set-project-version! release-version next-dev-version)
-          (scm! :add "project.clj")
-          (scm!
-           :commit
-           "-m"
-           (format
-            "lein-release plugin: bumped version from %s to %s for next development cycle"
-            release-version
-            next-dev-version))))
-      (println "Error: failed to find :version in project"))))
+    (try
+      (sh! "lein" "test")
+      (if-let [current-version (get project :version)]
+        (let
+          [release-version  (compute-release-version current-version)
+           next-dev-version (compute-next-development-version
+                             (string/replace current-version "-SNAPSHOT" ""))
+           target-dir       (:target-path
+                             project
+                             (:target-dir
+                              project
+                              (:jar-dir project "."))) ; target-path for lein2, target-dir or jar-dir for lein1
+           jar-file-name    (format "%s/%s-%s.jar"
+                                    target-dir
+                                    (:name project)
+                                    release-version)
+           flow? (git-flow-initialised?)]
+          (when (is-snapshot? current-version)
+            (println (format "setting project version %s => %s"
+                             current-version
+                             release-version))
+            (if
+              flow?
+              (scm! :start-release release-version))
+            (set-project-version! current-version release-version)
+            (println "adding, committing and tagging project.clj")
+            (scm! :add "project.clj")
+            (scm! :commit "--no-verify" "-m" (format "lein-release plugin: preparing %s release" release-version))
+            (scm! :tag (format "%s-%s" (:name project) release-version)))
+          (when-not (.exists (java.io.File. jar-file-name))
+            (println "creating jar and pom files...")
+            (sh! "lein" "jar")
+            (sh! "lein" "pom"))
+          (when (-> project :lein-release :build-uberjar)
+            (println "creating uberjar")
+            (sh! "lein" "uberjar"))
+          (perform-deploy! project jar-file-name)
+          (if flow? (scm! :finish-release release-version))
+          (when-not (is-snapshot? (extract-project-version-from-file))
+            (println (format "updating version %s => %s for next dev cycle" release-version next-dev-version))
+            (set-project-version! release-version next-dev-version)
+            (scm! :add "project.clj")
+            (scm!
+             :commit
+             "-m"
+             (format
+              "lein-release plugin: bumped version from %s to %s for next development cycle"
+              release-version
+              next-dev-version))))
+        (println "Error: failed to find :version in project"))
+      (catch Exception any
+        (compose-exception-reason any)))))
