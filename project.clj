@@ -1,4 +1,4 @@
-(defproject lein-release/lein-release "1.0.10"
+(defproject lein-release/lein-release "1.0.10-SNAPSHOT"
   :description "Leiningen Release Plugin"
   :license {:name "Eclipse Public License" ;; for compatibility with leiningen
             :url "http://www.eclipse.org/legal/epl-v10.html"}
