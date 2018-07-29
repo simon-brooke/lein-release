@@ -1,4 +1,4 @@
-(defproject lein-release/lein-release "1.0.10-SNAPSHOT"
+(defproject lein-release/lein-release "1.0.10"
   :description "Leiningen Release Plugin"
   :url         "https://github.com/relaynetwork/lein-release"
 ;;   :dev-dependencies [[swank-clojure "1.4.2"]]
