@@ -24,6 +24,24 @@
             :start-release ["git" "flow" "release" "start"]
             :finish-release ["git" "flow" "release" "finish"]}})
 
+
+(defmacro compose-exception-reason
+  "Compose and return a sensible reason message for this `exception`."
+  [exception]
+  `(string/join
+    "\n\tcaused by: "
+    (reverse
+     (loop [ex# ~exception result# ()]
+       (if-not (nil? ex#)
+         (recur
+          (.getCause ex#)
+          (cons (str
+                 (.getName (.getClass ex#))
+                 ": "
+                 (.getMessage ex#)) result#))
+         result#)))))
+
+
 (defn detect-scm []
   (or
    (:scm config)
@@ -189,6 +207,7 @@
 
 (defn release [project & args]
   (binding [config (or (:lein-release project) config)]
+    (try
     (if-let [current-version (get project :version)]
       (let
         [release-version  (compute-release-version current-version)
@@ -236,4 +255,6 @@
             "lein-release plugin: bumped version from %s to %s for next development cycle"
             release-version
             next-dev-version))))
-      (println "Error: failed to find :version in project"))))
+      (println "Error: failed to find :version in project"))
+      (catch Exception any
+        (compose-exception-reason any)))))
