@@ -3,8 +3,11 @@
   :url         "https://github.com/relaynetwork/lein-release"
 ;;   :dev-dependencies [[swank-clojure "1.4.2"]]
 ;;   :repositories [["releases" {:url "https://clojars.org/repo/" :creds :gpg}]]
-;;  :eval-in :leiningen
+  :eval-in :leiningen
   :lein-release {:scm :git
                  :build-uberjar true}
+
+  :plugins [[lein-release "1.0.10-SNAPSHOT"]]
+  ;; eating our own dogfood...
 
   :dependencies [[org.clojure/clojure "1.8.0"]])
