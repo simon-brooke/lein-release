@@ -1,9 +1,9 @@
-(defproject lein-release/lein-release "1.0.10-SNAPSHOT"
+(defproject lein-release/lein-release "0.1.0-SNAPSHOT"
   :description "Leiningen Release Plugin"
   :url         "https://github.com/relaynetwork/lein-release"
-;;   :dev-dependencies [[swank-clojure "1.4.2"]]
-;;   :repositories [["releases" {:url "https://clojars.org/repo/" :creds :gpg}]]
-;;  :eval-in :leiningen
+  :dev-dependencies [[swank-clojure "1.4.2"]]
+  :repositories [["releases" {:url "https://clojars.org/repo/" :creds :gpg}]]
+  :eval-in :leiningen
   :lein-release {:scm :git
                  :build-uberjar true}
 

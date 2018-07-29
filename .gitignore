@@ -10,3 +10,7 @@ target
 /.lein-deps-sum
 *~
 out.txt
+
+\.nrepl-port
+
+\.lein-repl-history
